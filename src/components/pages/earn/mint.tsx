@@ -1,7 +1,7 @@
 import { BalanceCard } from "@/components/shared/balance-card";
 import { TransactionForm } from "@/components/shared/transaction-form";
 import { Preview } from "@/components/shared/preview";
-import { USDC_MOCK_ADDRESS, VAULT_ADDRESS } from "@/lib/wagmi-config";
+import { USDC_MOCK_ADDRESS, VAULT_ADDRESS } from "@/lib/constants";
 import {
   erc4626Abi,
   erc20Abi,
@@ -69,16 +69,18 @@ export const Mint = () => {
   const {
     writeContract: mint,
     isPending: isMinting,
-    isSuccess: isMintSuccess,
+    data: mintHash,
     reset: resetMint,
   } = useWriteContract();
 
-  // Wait for approve transaction
   const { isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({
     hash: approveHash,
   });
 
-  // Preview mint - calculate assets needed to mint exact shares
+  const { isSuccess: isMintSuccess } = useWaitForTransactionReceipt({
+    hash: mintHash,
+  });
+
   const { data: previewAssets, isLoading: isLoadingPreview } = useReadContract({
     abi: erc4626Abi,
     address: VAULT_ADDRESS,
@@ -86,20 +88,17 @@ export const Mint = () => {
     args: [parseUnits(mintShares.toString(), 6)],
   });
 
-  // Calculate exchange rate (assets per share)
   const exchangeRate =
     previewAssets && mintShares > 0
       ? Number(formatUnits(previewAssets, 6)) / mintShares
       : undefined;
 
-  // Set approve hash when approve transaction is submitted
   useEffect(() => {
     if (approveHashData) {
       setApproveHash(approveHashData);
     }
   }, [approveHashData]);
 
-  // Auto-mint after approval succeeds
   useEffect(() => {
     if (isApproveSuccess && mintShares > 0) {
       const sharesInWei = parseUnits(mintShares.toString(), 6);
@@ -113,7 +112,6 @@ export const Mint = () => {
     }
   }, [isApproveSuccess, mintShares, mint, accountConnection.address]);
 
-  // Refetch balances after successful mint
   useEffect(() => {
     if (isMintSuccess) {
       refetchWalletBalance();
@@ -146,7 +144,6 @@ export const Mint = () => {
   const handleMint = (shares: number) => {
     if (!accountConnection.address || shares <= 0 || !previewAssets) return;
 
-    // Approve the max assets that will be needed
     approve({
       address: USDC_MOCK_ADDRESS,
       abi: erc20Abi,
@@ -214,6 +211,7 @@ export const Mint = () => {
           conversionCurrency="aUSDC"
           isLoading={isApproving || isMinting}
           inputPrefix=""
+          value={mintShares}
           preview={
             mintShares > 0 && (
               <Preview

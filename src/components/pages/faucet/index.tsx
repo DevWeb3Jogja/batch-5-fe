@@ -16,27 +16,23 @@ import {
 import { formatUnits, parseUnits } from "viem";
 import { useState } from "react";
 import {
-  useConnect,
   useConnection,
-  useConnectors,
   useDisconnect,
   useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
-import { USDC_MOCK_ADDRESS } from "@/lib/wagmi-config";
+import { USDC_MOCK_ADDRESS } from "@/lib/constants";
 import { usdcMockAbi } from "@/lib/usdc-mock-abi";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export function Faucet() {
   const [mintAmount, setMintAmount] = useState("100");
 
   const { address, isConnected } = useConnection();
-  const { connect } = useConnect();
   const { disconnect } = useDisconnect();
-
-  const connectors = useConnectors();
 
   const {
     writeContract,
@@ -117,17 +113,7 @@ export function Faucet() {
                 <p className="text-sm text-gray-600 text-center max-w-sm">
                   Connect your Web3 wallet to start minting USDC Mock tokens
                 </p>
-                {connectors.map((connector) => (
-                  <Button
-                    key={connector.id}
-                    onClick={() => connect({ connector })}
-                    size="lg"
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    <Wallet className="mr-2 h-5 w-5" />
-                    Connect Wallet
-                  </Button>
-                ))}
+                <ConnectButton />
               </div>
             ) : (
               <div className="space-y-6">
@@ -151,7 +137,7 @@ export function Faucet() {
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 p-6 text-white">
+                <div className="rounded-lg bg-linear-to-br from-blue-500 to-indigo-600 p-6 text-white">
                   <p className="text-sm font-medium opacity-90">
                     Your USDC Mock Balance
                   </p>
@@ -198,7 +184,7 @@ export function Faucet() {
                     parseFloat(mintAmount) <= 0
                   }
                   size="lg"
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                  className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
                 >
                   {isPending || isConfirming ? (
                     <>

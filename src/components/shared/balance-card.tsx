@@ -47,16 +47,13 @@ export function BalanceCard({
     <div
       className={cn("relative overflow-hidden p-8 text-white", gradientClass)}
     >
-      {/* Animated background pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 -left-4 w-72 h-72 bg-white rounded-full mix-blend-overlay filter blur-xl animate-pulse" />
         <div className="absolute bottom-0 -right-4 w-72 h-72 bg-white rounded-full mix-blend-overlay filter blur-xl animate-pulse delay-700" />
       </div>
 
-      {/* Content */}
       <div className="relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Wallet Balance Section */}
           <div
             className={cn(
               "rounded-xl p-5 backdrop-blur-sm border",
@@ -89,7 +86,6 @@ export function BalanceCard({
             </div>
           </div>
 
-          {/* Vault Shares Section */}
           <div
             className={cn(
               "rounded-xl p-5 backdrop-blur-sm border",
@@ -109,7 +105,7 @@ export function BalanceCard({
               <span className="text-4xl font-bold tracking-tight">
                 {shares.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
-                  maximumFractionDigits: 6,
+                  maximumFractionDigits: 2,
                 })}
               </span>
               <span className="text-xl font-semibold opacity-90">aUSDC</span>
@@ -121,19 +117,17 @@ export function BalanceCard({
           </div>
         </div>
 
-        {/* Share Value Indicator */}
         {shares > 0 && depositedValue !== undefined && depositedValue > 0 && (
           <div className="mt-6 pt-4 border-t border-white/20">
             <div className="flex items-center justify-between text-sm">
               <span className="opacity-75">Estimated Share Value</span>
               <span className="font-semibold">
-                1 aUSDC ≈ {(depositedValue / shares).toFixed(6)} {currency}
+                1 aUSDC ≈ {(depositedValue / shares).toFixed(2)} {currency}
               </span>
             </div>
           </div>
         )}
 
-        {/* Vault Statistics */}
         {(totalAssets !== undefined || totalSupply !== undefined) && (
           <div className="mt-6 pt-4 border-t border-white/20">
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-75">
@@ -177,10 +171,8 @@ export function BalanceCard({
           </div>
         )}
 
-        {/* Additional Metrics */}
         {(depositedValue !== undefined || apy !== undefined) && (
           <div className="mt-6 pt-4 border-t border-white/20 space-y-4">
-            {/* Total Deposited Value */}
             {depositedValue !== undefined && depositedValue > 0 && (
               <div
                 className={cn(
@@ -211,7 +203,6 @@ export function BalanceCard({
               </div>
             )}
 
-            {/* Yield Earned */}
             {yieldEarned !== undefined &&
               depositedValue !== undefined &&
               depositedValue > 0 && (
@@ -270,7 +261,6 @@ export function BalanceCard({
                 </div>
               )}
 
-            {/* APY */}
             {apy !== undefined && (
               <div
                 className={cn(
