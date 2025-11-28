@@ -1,6 +1,6 @@
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
+import { ConnectButton } from "./connect-button";
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -24,9 +24,10 @@ export function Navbar() {
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
-                    `rounded-md px-3 py-2 text-sm font-medium transition-colors ${isActive
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                    `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-gray-900 text-white"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                     }`
                   }
                 >
@@ -92,9 +93,10 @@ export function Navbar() {
                 to={item.to}
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
-                  `block rounded-md px-3 py-2 text-base font-medium transition-colors ${isActive
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  `block rounded-md px-3 py-2 text-base font-medium transition-colors ${
+                    isActive
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   }`
                 }
               >

@@ -14,16 +14,3 @@ export function formatNumber(value: number | string): string {
     maximumFractionDigits: 2,
   });
 }
-
-/**
- * Parse formatted number string back to number
- * @param value - The formatted string (e.g., "1,000.50")
- * @returns The numeric value
- */
-export function parseFormattedNumber(value: string): number {
-  if (!value) return 0;
-  // Remove all commas and any non-numeric characters except dots
-  const cleaned = value.replace(/[^0-9.]/g, "");
-  const num = parseFloat(cleaned);
-  return isNaN(num) ? 0 : num;
-}

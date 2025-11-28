@@ -18,7 +18,8 @@ interface TransactionFormProps {
   conversionCurrency?: string;
   isLoading: boolean;
   inputPrefix?: string;
-  maxShares?: number; // Used for mint/redeem to calculate percentage based on max possible shares
+  maxShares?: number;
+  value?: number;
 }
 
 export function TransactionForm({
@@ -32,11 +33,11 @@ export function TransactionForm({
   preview,
   inputPrefix = "$",
   maxShares,
+  value,
 }: TransactionFormProps) {
   const [amount, setAmount] = useState(0);
   const [percentage, setPercentage] = useState(0);
 
-  // Use maxShares for percentage calculation if provided, otherwise use balance
   const percentageBase = maxShares !== undefined ? maxShares : balance;
 
   const handleAmountChange = (value: number) => {
@@ -66,10 +67,12 @@ export function TransactionForm({
     type === "deposit" ? "Deposit Amount" : "Withdraw Amount";
   const defaultButtonLabel = type === "deposit" ? "Deposit" : "Withdraw";
 
+  const currentAmount = value !== undefined ? value : amount;
+
   return (
     <CardContent className="space-y-6 p-0">
       <AmountInput
-        value={amount}
+        value={currentAmount}
         type={type}
         onChange={handleAmountChange}
         label={inputLabel || defaultInputLabel}

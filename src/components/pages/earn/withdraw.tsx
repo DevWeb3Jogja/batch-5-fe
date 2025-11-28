@@ -1,7 +1,7 @@
 import { BalanceCard } from "@/components/shared/balance-card";
 import { TransactionForm } from "@/components/shared/transaction-form";
 import { Preview } from "@/components/shared/preview";
-import { USDC_MOCK_ADDRESS, VAULT_ADDRESS } from "@/lib/wagmi-config";
+import { USDC_MOCK_ADDRESS, VAULT_ADDRESS } from "@/lib/constants";
 import {
   erc20Abi,
   erc4626Abi,
@@ -9,7 +9,12 @@ import {
   parseUnits,
   type Address,
 } from "viem";
-import { useConnection, useReadContract, useWriteContract } from "wagmi";
+import {
+  useConnection,
+  useReadContract,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
 import { useEffect, useState } from "react";
 
 export const Withdraw = () => {
@@ -56,11 +61,14 @@ export const Withdraw = () => {
   const {
     writeContract: withdraw,
     isPending: isWithdrawing,
-    isSuccess: isWithdrawSuccess,
+    data: withdrawHash,
     reset: resetWithdraw,
   } = useWriteContract();
 
-  // Preview withdraw - calculate shares needed to withdraw exact assets
+  const { isSuccess: isWithdrawSuccess } = useWaitForTransactionReceipt({
+    hash: withdrawHash,
+  });
+
   const { data: previewShares, isLoading: isLoadingPreview } = useReadContract({
     abi: erc4626Abi,
     address: VAULT_ADDRESS,
@@ -68,13 +76,11 @@ export const Withdraw = () => {
     args: [parseUnits(withdrawAssets.toString(), 6)],
   });
 
-  // Calculate exchange rate (shares per asset)
   const exchangeRate =
     previewShares && withdrawAssets > 0
       ? Number(formatUnits(previewShares, 6)) / withdrawAssets
       : undefined;
 
-  // Refetch balances after successful withdraw
   useEffect(() => {
     if (isWithdrawSuccess) {
       refetchWalletBalance();
@@ -95,7 +101,6 @@ export const Withdraw = () => {
     resetWithdraw,
   ]);
 
-  // Track initial deposit value for yield calculations
   useEffect(() => {
     if (
       initialDeposit === null &&
@@ -180,6 +185,7 @@ export const Withdraw = () => {
           showConversion={true}
           conversionCurrency="aUSDC"
           isLoading={isWithdrawing}
+          value={withdrawAssets}
           preview={
             withdrawAssets > 0 && (
               <Preview

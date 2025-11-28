@@ -1,5 +1,4 @@
 import "./App.css";
-import "@rainbow-me/rainbowkit/styles.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,15 +6,31 @@ import { Navbar } from "./components/shared/navbar";
 import { FaucetPage } from "./pages/faucet";
 import { EarnPage } from "./pages/earn";
 import { config } from "./lib/wagmi-config";
-import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { PrivyProvider } from "@privy-io/react-auth";
+import { baseSepolia } from "viem/chains";
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
+    <PrivyProvider
+      appId={import.meta.env.VITE_PRIVY_APP_ID}
+      config={{
+        loginMethods: ["google", "wallet"],
+        defaultChain: baseSepolia,
+        supportedChains: [baseSepolia],
+        embeddedWallets: {
+          ethereum: {
+            createOnLogin: "users-without-wallets",
+          },
+        },
+        appearance: {
+          walletList: ["detected_ethereum_wallets"],
+        },
+      }}
+    >
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
           <BrowserRouter>
             <div className="min-h-screen bg-gray-50">
               <Navbar />
@@ -26,9 +41,9 @@ function App() {
               </Routes>
             </div>
           </BrowserRouter>
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </PrivyProvider>
   );
 }
 

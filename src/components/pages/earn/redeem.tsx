@@ -1,7 +1,7 @@
 import { BalanceCard } from "@/components/shared/balance-card";
 import { TransactionForm } from "@/components/shared/transaction-form";
 import { Preview } from "@/components/shared/preview";
-import { USDC_MOCK_ADDRESS, VAULT_ADDRESS } from "@/lib/wagmi-config";
+import { USDC_MOCK_ADDRESS, VAULT_ADDRESS } from "@/lib/constants";
 import {
   erc20Abi,
   erc4626Abi,
@@ -9,7 +9,12 @@ import {
   parseUnits,
   type Address,
 } from "viem";
-import { useConnection, useReadContract, useWriteContract } from "wagmi";
+import {
+  useConnection,
+  useReadContract,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
 import { useEffect, useState } from "react";
 
 export const Redeem = () => {
@@ -56,11 +61,14 @@ export const Redeem = () => {
   const {
     writeContract: redeem,
     isPending: isRedeeming,
-    isSuccess: isRedeemSuccess,
+    data: redeemHash,
     reset: resetRedeem,
   } = useWriteContract();
 
-  // Preview redeem - calculate assets user will receive for shares
+  const { isSuccess: isRedeemSuccess } = useWaitForTransactionReceipt({
+    hash: redeemHash,
+  });
+
   const { data: previewAssets, isLoading: isLoadingPreview } = useReadContract({
     abi: erc4626Abi,
     address: VAULT_ADDRESS,
@@ -68,13 +76,11 @@ export const Redeem = () => {
     args: [parseUnits(redeemShares.toString(), 6)],
   });
 
-  // Calculate exchange rate (assets per share)
   const exchangeRate =
     previewAssets && redeemShares > 0
       ? Number(formatUnits(previewAssets, 6)) / redeemShares
       : undefined;
 
-  // Refetch balances after successful redeem
   useEffect(() => {
     if (isRedeemSuccess) {
       refetchWalletBalance();
@@ -95,7 +101,6 @@ export const Redeem = () => {
     resetRedeem,
   ]);
 
-  // Track initial deposit value for yield calculations
   useEffect(() => {
     if (
       initialDeposit === null &&
@@ -182,6 +187,7 @@ export const Redeem = () => {
           conversionCurrency="USDC"
           isLoading={isRedeeming}
           inputPrefix=""
+          value={redeemShares}
           preview={
             redeemShares > 0 && (
               <Preview

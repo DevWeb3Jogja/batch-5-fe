@@ -56,13 +56,11 @@ export function Preview({
 
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
-      {/* Header */}
       <div className="flex items-center gap-2 text-sm text-gray-600">
         <Info className="h-4 w-4" />
         <span className="font-medium">{getDescription()}</span>
       </div>
 
-      {/* Preview Calculation */}
       <div className="flex items-center justify-between bg-white rounded-lg p-4 border border-gray-200">
         <div className="flex items-center gap-3">
           <div className="text-center">
@@ -91,7 +89,6 @@ export function Preview({
         </div>
       </div>
 
-      {/* Exchange Rate */}
       {exchangeRate && (
         <div className="flex items-center justify-between text-xs text-gray-600 px-2">
           <span>Exchange Rate</span>
@@ -101,7 +98,6 @@ export function Preview({
         </div>
       )}
 
-      {/* Additional Info */}
       <div className="text-xs text-gray-500 px-2">
         {type === "deposit" && (
           <p>
