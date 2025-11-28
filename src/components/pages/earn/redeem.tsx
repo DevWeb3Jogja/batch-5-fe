@@ -1,0 +1,202 @@
+import { BalanceCard } from "@/components/shared/balance-card";
+import { TransactionForm } from "@/components/shared/transaction-form";
+import { Preview } from "@/components/shared/preview";
+import { USDC_MOCK_ADDRESS, VAULT_ADDRESS } from "@/lib/wagmi-config";
+import {
+  erc20Abi,
+  erc4626Abi,
+  formatUnits,
+  parseUnits,
+  type Address,
+} from "viem";
+import { useConnection, useReadContract, useWriteContract } from "wagmi";
+import { useEffect, useState } from "react";
+
+export const Redeem = () => {
+  const accountConnection = useConnection();
+  const [redeemShares, setRedeemShares] = useState(0);
+  const [initialDeposit, setInitialDeposit] = useState<number | null>(null);
+
+  const { data: userWalletBalance, refetch: refetchWalletBalance } =
+    useReadContract({
+      abi: erc20Abi,
+      address: USDC_MOCK_ADDRESS,
+      functionName: "balanceOf",
+      args: [accountConnection.address as Address],
+    });
+
+  const { data: userVaultBalance, refetch: refetchVaultBalance } =
+    useReadContract({
+      abi: erc4626Abi,
+      address: VAULT_ADDRESS,
+      functionName: "balanceOf",
+      args: [accountConnection.address as Address],
+    });
+
+  const { data: convertedAssets, refetch: refetchConvertedAssets } =
+    useReadContract({
+      abi: erc4626Abi,
+      address: VAULT_ADDRESS,
+      functionName: "convertToAssets",
+      args: [userVaultBalance || 0n],
+    });
+
+  const { data: totalAssets, refetch: refetchTotalAssets } = useReadContract({
+    abi: erc4626Abi,
+    address: VAULT_ADDRESS,
+    functionName: "totalAssets",
+  });
+
+  const { data: totalSupply, refetch: refetchTotalSupply } = useReadContract({
+    abi: erc4626Abi,
+    address: VAULT_ADDRESS,
+    functionName: "totalSupply",
+  });
+
+  const {
+    writeContract: redeem,
+    isPending: isRedeeming,
+    isSuccess: isRedeemSuccess,
+    reset: resetRedeem,
+  } = useWriteContract();
+
+  // Preview redeem - calculate assets user will receive for shares
+  const { data: previewAssets, isLoading: isLoadingPreview } = useReadContract({
+    abi: erc4626Abi,
+    address: VAULT_ADDRESS,
+    functionName: "previewRedeem",
+    args: [parseUnits(redeemShares.toString(), 6)],
+  });
+
+  // Calculate exchange rate (assets per share)
+  const exchangeRate =
+    previewAssets && redeemShares > 0
+      ? Number(formatUnits(previewAssets, 6)) / redeemShares
+      : undefined;
+
+  // Refetch balances after successful redeem
+  useEffect(() => {
+    if (isRedeemSuccess) {
+      refetchWalletBalance();
+      refetchVaultBalance();
+      refetchConvertedAssets();
+      refetchTotalAssets();
+      refetchTotalSupply();
+      setRedeemShares(0);
+      resetRedeem();
+    }
+  }, [
+    isRedeemSuccess,
+    refetchWalletBalance,
+    refetchVaultBalance,
+    refetchConvertedAssets,
+    refetchTotalAssets,
+    refetchTotalSupply,
+    resetRedeem,
+  ]);
+
+  // Track initial deposit value for yield calculations
+  useEffect(() => {
+    if (
+      initialDeposit === null &&
+      convertedAssets &&
+      Number(convertedAssets) > 0
+    ) {
+      setInitialDeposit(Number(formatUnits(convertedAssets, 6)));
+    }
+  }, [convertedAssets, initialDeposit]);
+
+  const handleRedeem = (shares: number) => {
+    if (!accountConnection.address || shares <= 0) return;
+
+    const sharesInWei = parseUnits(shares.toString(), 6);
+
+    redeem({
+      address: VAULT_ADDRESS,
+      abi: erc4626Abi,
+      functionName: "redeem",
+      args: [
+        sharesInWei,
+        accountConnection.address as Address,
+        accountConnection.address as Address,
+      ],
+    });
+  };
+
+  const walletBalance = userWalletBalance
+    ? Number(formatUnits(userWalletBalance, 6))
+    : 0;
+  const vaultShares = userVaultBalance
+    ? Number(formatUnits(userVaultBalance, 6))
+    : 0;
+  const depositedValue = convertedAssets
+    ? Number(formatUnits(convertedAssets, 6))
+    : 0;
+
+  const yieldEarned =
+    initialDeposit !== null && depositedValue > 0
+      ? depositedValue - initialDeposit
+      : undefined;
+
+  const yieldPercentage =
+    yieldEarned !== undefined && initialDeposit !== null && initialDeposit > 0
+      ? (yieldEarned / initialDeposit) * 100
+      : undefined;
+
+  const apy =
+    totalAssets && totalSupply && Number(totalSupply) > 0
+      ? (Number(formatUnits(totalAssets, 6)) /
+          Number(formatUnits(totalSupply, 6)) -
+          1) *
+        100
+      : undefined;
+
+  return (
+    <>
+      <BalanceCard
+        amount={walletBalance}
+        currency="USDC"
+        shares={vaultShares}
+        variant="secondary"
+        depositedValue={depositedValue}
+        yieldEarned={yieldEarned}
+        yieldPercentage={yieldPercentage}
+        apy={apy}
+        totalAssets={
+          totalAssets ? Number(formatUnits(totalAssets, 6)) : undefined
+        }
+        totalSupply={
+          totalSupply ? Number(formatUnits(totalSupply, 6)) : undefined
+        }
+      />
+      <div className="p-8">
+        <TransactionForm
+          type="withdraw"
+          balance={vaultShares}
+          maxShares={vaultShares}
+          onSubmit={handleRedeem}
+          onAmountChange={setRedeemShares}
+          inputLabel="Shares to Redeem"
+          buttonLabel="Redeem Shares"
+          showConversion={true}
+          conversionCurrency="USDC"
+          isLoading={isRedeeming}
+          inputPrefix=""
+          preview={
+            redeemShares > 0 && (
+              <Preview
+                type="redeem"
+                inputAmount={redeemShares}
+                outputAmount={previewAssets}
+                inputCurrency="aUSDC"
+                outputCurrency="USDC"
+                isLoading={isLoadingPreview}
+                exchangeRate={exchangeRate}
+              />
+            )
+          }
+        />
+      </div>
+    </>
+  );
+};
